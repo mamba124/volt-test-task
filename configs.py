@@ -3,20 +3,8 @@ def get_llm_tools():
     return [
         {
             "name": "extract_company_info",
-            "description": "Extract detailed information about companies mentioned in text",
+            "description": "Extract detailed information about companies mentioned in text. If data is not presented use <UNKNOWN> tag",
             "input_schema": {
-                "type": "object",
-                "properties": {
-                    "text": {
-                        "type": "string",
-                        "description": "The text containing company mentions to analyze"
-                    }
-                },
-                "required": ["text"]
-            },
-            "output_schema": {
-                "type": "array",
-                "items": {
                     "type": "object",
                     "properties": {
                         "name": {
@@ -80,8 +68,7 @@ def get_llm_tools():
                         }
                     },
                     "required": ["name", "website", "sector", "location", "description", "key_people", "competitors"]
-                }
-            }
+            },
         },
     ]
 
@@ -93,4 +80,16 @@ def get_sysprompt():
         Make reasonable inferences for missing information but clearly indicate when information is inferred.
         
         If the text does not contain any companies or company-related information, that's completely fine.
-        In such cases, it's appropriate to return nothing or indicate that no company information was found in the text."""
+        In such cases, it's appropriate to return nothing or indicate that no company information was found in the text.
+        
+        Example:
+        <example>
+            I work at Apple with James Cook as a head.
+            <output>
+            Name: Apple
+            CEO: James Cook
+            website: <UNKNOWN>
+            </output>
+        </example>
+
+        """
