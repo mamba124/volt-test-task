@@ -17,7 +17,7 @@ class ClaudeNER:
     def get_entities(self, text):
         tools = get_llm_tools()
         SYSTEMPROMPT = get_sysprompt()
-        
+
         response = self.client.messages.create(
                         model=self.model,
                         max_tokens=2048,
@@ -28,33 +28,31 @@ class ClaudeNER:
                             {"role": "user", "content": f"Extract all company information from this text: {text}"}
                         ]
                     )
-        return response.json()
+        return response
         
     def parse_entities(self, response):
         tool_outputs = []
-        for message in response.get("messages", []):
-            if message.get("role") == "assistant":
-                for content_item in message.get("content", []):
-                    if content_item.get("type") == "tool_use" and content_item.get("name") == "extract_company_info":
-                        tool_output = json.loads(content_item.get("input", {}).get("text", "{}"))
-                        tool_outputs.append(tool_output)
+        if content := response.content:
+            for content_item in content:
+                if content_item.type == "tool_use" and content_item.name == "extract_company_info":
+                    tool_outputs.append(content_item.input)
         
         if tool_outputs:
-            company_info_response = CompanyInfoResponse(companies=tool_outputs[0])
-            return company_info_response.companies
+            company_info_response = CompanyInfoResponse(companies=tool_outputs)
+            return company_info_response
         else:
             return []
 
 
 def extract_company_info(text: str):
     engine = ClaudeNER()
-    company_info_response_list = engine.get_entities(text)
+    company_info_response = engine.get_entities(text)
+    company_info_response_list = engine.parse_entities(company_info_response)
     return company_info_response_list
 
     
 def run(text_sample):
     result = extract_company_info(text_sample)
-    
     for company in result.companies:
         print(f"Company: {company.name}")
         print(f"Website: {company.website}")
